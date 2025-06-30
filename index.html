@@ -64,6 +64,7 @@
 		  background: #f9f9f9;
 		  border: 1px solid #ddd;
 		  border-radius: 4px;
+		  transition: all 0.3s ease;
 		}
 
 		li.completed {
@@ -83,6 +84,10 @@
 		.delete-btn:hover {
 		  background: #cc0000;
 		}
+		#searchInput{
+			padding: 10px;
+			margin-top: 10px;
+		}
 	</style>
 </head>
 <body>
@@ -90,6 +95,7 @@
     <h1>To-Do List</h1>
     <input type="text" id="taskInput" placeholder="Add a new task..." />
     <button id="addTaskBtn">Add Task</button>
+	<input type="text" id="searchInput" placeholder="Search tasks..." />
     <ul id="taskList"></ul>
   </div>
   <script>
@@ -113,7 +119,13 @@
 		});
 		localStorage.setItem('tasks', JSON.stringify(tasks));
 	}
-
+	document.getElementById('searchInput').addEventListener('input', (e) => {
+		const query = e.target.value.toLowerCase();
+		document.querySelectorAll('#taskList li').forEach(li => {
+			const text = li.firstChild.textContent.toLowerCase();
+			li.style.display = text.includes(query) ? '' : 'none';
+		});
+	});
 	function addTask(text, completed = false) {
 		const li = document.createElement('li');
 		li.textContent = text;
