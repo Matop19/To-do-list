@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>To-Do List avec Connexion</title>
+  <title>To-Do List</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -15,106 +16,79 @@
       align-items: center;
     }
     .container {
-      width: 320px;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
+	  width: 320px;
+	  background: white;
+	  padding: 20px;
+	  border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+	  text-align: center;
+	}
     h1 {
-      margin-bottom: 20px;
-      color: #333;
-    }
-    input {
+	  margin-bottom: 20px;
+	  color: #333;
+	}
+    input, button {
       width: 90%;
-      padding: 10px;
-      margin: 5px 0;
+	  padding: 10px;
+	  margin: 5px 0;
+	  border-radius: 4px;
       border: 1px solid #ccc;
-      border-radius: 4px;
     }
     button {
-      width: 95%;
-      padding: 10px;
-      margin-top: 10px;
       background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+	  color: white;
+	  border: none;
+	  cursor: pointer;
     }
     button:hover {
-      background-color: #0056b3;
-    }
+	  background-color: #0056b3;
+	}
     ul {
       list-style: none;
-      padding: 0;
-      text-align: left;
-	  max-height: 300px;
+	  padding: 0;
+	  text-align: left;
+      max-height: 300px;
 	  overflow-y: auto;
-<<<<<<< HEAD
-=======
 	  word-break: break-word;
->>>>>>> authentifiation
     }
     li {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
-      margin: 5px 0;
       background: #f9f9f9;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-	  word-wrap: break-word;
-	  white-space: normal;
+	  padding: 10px;
+	  border: 1px solid #ddd;
+      margin: 5px 0;
+	  border-radius: 4px;
 	  display: flex;
 	  justify-content: space-between;
-	  align-items: center;
 	  gap: 10px;
     }
-	li span {
-	  flex-grow: 1;
-<<<<<<< HEAD
-	  word-wrap: break-word;
-=======
-	  word-break: break-word;
-	  overflow-wrap: break-word;
-	  white-space: normal;  
->>>>>>> authentifiation
+    li.completed span {
+	  text-decoration: line-through;
+	  color: #888;
 	}
-    li.completed {
-      text-decoration: line-through;
-      color: #888;
-    }
     .delete-btn {
       background: #ff4d4d;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-	  width: auto;
-	  min-width: 50px;
+	  color: white;
+	  border: none;
+	  padding: 5px 10px;
+      border-radius:4px;
+	  cursor: pointer;
+	  min-width:50px;
+	  max-width:100px;
     }
-    .delete-btn:hover {
-      background: #cc0000;
-    }
-    #message {
-      color: red;
-      margin: 5px 0;
-    }
+    .delete-btn:hover { background: #cc0000; }
+    #message { color: red; margin: 5px 0; }
   </style>
 </head>
 <body>
   <div class="container" id="authContainer">
     <h1>Connexion</h1>
-    <input type="text" id="username" placeholder="Nom d'utilisateur" />
+    <input type="email" id="username" placeholder="Email" />
     <input type="password" id="password" placeholder="Mot de passe" />
     <button onclick="register()">Créer un compte</button>
     <button onclick="login()">Se connecter</button>
     <p id="message"></p>
   </div>
+
   <div class="container" id="todoContainer" style="display: none;">
     <h1>To-Do List</h1>
     <p id="welcome"></p>
@@ -125,101 +99,109 @@
     <button onclick="logout()">Se déconnecter</button>
   </div>
   <script>
+    const supabaseUrl = 'https://xtnybqqgiftasikzgcos.supabase.co';
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bnlicXFnaWZ0YXNpa3pnY29zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNjQxNTksImV4cCI6MjA2Njk0MDE1OX0.OLkZI-KafGoLiJHmVwwDWQLBIG6IsJfFIXZHdUxwx68";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
     let currentUser = null;
+    const taskList = document.getElementById('taskList');
+	supabase.auth.onAuthStateChange((event, session) => {
+	  console.log("Auth event:", event, session);
+	});
+
     function showMessage(msg, color = "red") {
       const msgEl = document.getElementById("message");
       msgEl.textContent = msg;
       msgEl.style.color = color;
     }
-    function getUserData(username) {
-      const data = localStorage.getItem(`user_${username}`);
-      return data ? JSON.parse(data) : null;
-    }
-    function saveUserData(username, data) {
-      localStorage.setItem(`user_${username}`, JSON.stringify(data));
-    }
-    function register() {
-      const username = document.getElementById("username").value.trim();
+
+    async function register() {
+      const email = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value;
-      if (!username || !password) return showMessage("Champs requis");
-      if (getUserData(username)) {
-        return showMessage("Nom d'utilisateur déjà utilisé");
-      }
-      const newUser = { password: password, tasks: [] };
-      saveUserData(username, newUser);
-      showMessage("Compte créé ! Connectez-vous.", "green");
+      if (!email || !password) return showMessage("Champs requis");
+
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) return showMessage(error.message);
+      showMessage("Compte créé ! Vérifiez votre e-mail.", "green");
     }
-    function login() {
-      const username = document.getElementById("username").value.trim();
+
+    async function login() {
+      const email = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value;
-      const userData = getUserData(username);
-      if (!userData || userData.password !== password) {
-        return showMessage("Identifiants invalides");
-      }
-      currentUser = username;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return showMessage("Identifiants invalides");
+
+      currentUser = data.user;
       document.getElementById("authContainer").style.display = "none";
       document.getElementById("todoContainer").style.display = "block";
-      document.getElementById("welcome").textContent = "Bienvenue, " + username;
+      document.getElementById("welcome").textContent = "Bienvenue, " + currentUser.email;
       loadTasks();
     }
-    function logout() {
+
+    async function logout() {
+      await supabase.auth.signOut();
       currentUser = null;
       document.getElementById("authContainer").style.display = "block";
       document.getElementById("todoContainer").style.display = "none";
-      document.getElementById("taskList").innerHTML = '';
+      taskList.innerHTML = '';
       document.getElementById("username").value = '';
       document.getElementById("password").value = '';
       showMessage("");
     }
-    const taskList = document.getElementById('taskList');
-    function addTask(text, completed = false) {
+
+    async function addTask(text, completed = false, id = null) {
       const li = document.createElement('li');
       const textSpan = document.createElement('span');
-	  textSpan.textContent = text;
-	  li.appendChild(textSpan);
+      textSpan.textContent = text;
+      li.appendChild(textSpan);
       if (completed) li.classList.add('completed');
-      li.addEventListener('click', () => {
+
+      li.addEventListener('click', async () => {
+        const newStatus = !li.classList.contains('completed');
         li.classList.toggle('completed');
-        saveTasks();
+        if (id) await supabase.from("tasks").update({ completed: newStatus }).eq("id", id);
       });
+
       const deleteBtn = document.createElement('button');
       deleteBtn.textContent = 'Delete';
       deleteBtn.classList.add('delete-btn');
-      deleteBtn.addEventListener('click', (e) => {
+      deleteBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         li.remove();
-        saveTasks();
+        if (id) await supabase.from("tasks").delete().eq("id", id);
       });
+
       li.appendChild(deleteBtn);
       taskList.appendChild(li);
+
+      if (!id) {
+        const { data } = await supabase
+          .from("tasks")
+          .insert([{ text, completed, user_id: currentUser.id }])
+          .select();
+        id = data[0].id;
+      }
     }
-    function saveTasks() {
-      const tasks = [];
-      taskList.querySelectorAll('li').forEach(li => {
-        tasks.push({
-          text: li.firstChild.textContent,
-          completed: li.classList.contains('completed')
-        });
-      });
-      const data = getUserData(currentUser);
-      data.tasks = tasks;
-      saveUserData(currentUser, data);
-    }
-    function loadTasks() {
-      const data = getUserData(currentUser);
+
+    async function loadTasks() {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("user_id", currentUser.id);
+      if (error) return showMessage("Erreur lors du chargement");
       taskList.innerHTML = '';
-      data.tasks.forEach(task => {
-        addTask(task.text, task.completed);
-      });
+      data.forEach(task => addTask(task.text, task.completed, task.id));
     }
+
     document.getElementById('addTaskBtn').addEventListener('click', () => {
       const taskInput = document.getElementById('taskInput');
       const text = taskInput.value.trim();
       if (!text) return;
       addTask(text);
       taskInput.value = '';
-      saveTasks();
     });
+
     document.getElementById('searchInput').addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase();
       document.querySelectorAll('#taskList li').forEach(li => {
