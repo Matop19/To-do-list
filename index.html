@@ -66,6 +66,7 @@
 	  color: #888;
 	}
     .delete-btn {
+	  font-size: 11px;
       background: #ff4d4d;
 	  color: white;
 	  border: none;
@@ -73,17 +74,38 @@
       border-radius:4px;
 	  cursor: pointer;
 	  min-width:50px;
-	  max-width:100px;
+	  max-width:75px;
+	  max-height:30px;
     }
-    .delete-btn:hover { background: #cc0000; }
-    #message { color: red; margin: 5px 0; }
+    .delete-btn:hover {
+	  background: #cc0000;
+	}
+	.modif-btn {
+	  font-size: 11px;
+      background: #27B744;
+	  color: white;
+	  border: none;
+	  padding: 5px 10px;
+      border-radius:4px;
+	  cursor: pointer;
+	  min-width:50px;
+	  max-width:60px;
+	  max-height:30px;
+    }
+    .modif-btn:hover {
+	  background: #00cc00;
+	}
+    #message {
+	  color: red; margin: 5px 0;
+	}
   </style>
 </head>
 <body>
   <div class="container" id="authContainer">
     <h1>Connexion</h1>
-    <input type="email" id="username" placeholder="Email" />
+    <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Mot de passe" />
+	<input type="text" id="registerUsername" placeholder="Nom d'utilisateur (inscription uniquement)" />
     <button onclick="register()">Créer un compte</button>
     <button onclick="login()">Se connecter</button>
     <p id="message"></p>
@@ -116,29 +138,61 @@
     }
 
     async function register() {
-      const email = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
-      if (!email || !password) return showMessage("Champs requis");
+	  const email = document.getElementById("email").value.trim();
+	  const password = document.getElementById("password").value;
+	  const username = document.getElementById("registerUsername").value.trim();
 
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) return showMessage(error.message);
-      showMessage("Compte créé ! Vérifiez votre e-mail.", "green");
-    }
+	  if (!email || !password || !username) return showMessage("Tous les champs sont requis");
+
+	  const { data: existingUser, error: existingUserError } = await supabase
+		.from("profiles")
+		.select("*")
+		.eq("username", username)
+		.single();
+
+	  if (existingUser) return showMessage("Nom d'utilisateur déjà utilisé");
+
+	  const { data, error } = await supabase.auth.signUp({
+		email,
+		password,
+	  });
+
+	  if (error) return showMessage(error.message);
+
+	  const userId = data.user.id;
+
+	  const { error: profileError } = await supabase
+		.from("profiles")
+		.insert([{ id: userId, username }]);
+
+	  if (profileError) return showMessage("Erreur lors de la création du profil");
+
+	  showMessage("Compte créé ! Vérifiez votre e-mail.", "green");
+	}
 
     async function login() {
-      const email = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
+	  const email = document.getElementById("email").value.trim();
+	  const password = document.getElementById("password").value;
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return showMessage("Identifiants invalides");
+	  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+	  if (error) return showMessage("Identifiants invalides");
 
-      currentUser = data.user;
-      document.getElementById("authContainer").style.display = "none";
-      document.getElementById("todoContainer").style.display = "block";
-      document.getElementById("welcome").textContent = "Bienvenue, " + currentUser.email;
-      loadTasks();
-    }
+	  currentUser = data.user;
 
+	  const { data: profileData, error: profileError } = await supabase
+		.from("profiles")
+		.select("username")
+		.eq("id", currentUser.id)
+		.single();
+
+	  const username = profileData?.username || currentUser.email;
+
+	  document.getElementById("authContainer").style.display = "none";
+	  document.getElementById("todoContainer").style.display = "block";
+	  document.getElementById("welcome").textContent = "Bienvenue, " + username;
+
+	  loadTasks();
+	}
     async function logout() {
       await supabase.auth.signOut();
       currentUser = null;
@@ -151,38 +205,76 @@
     }
 
     async function addTask(text, completed = false, id = null) {
-      const li = document.createElement('li');
-      const textSpan = document.createElement('span');
-      textSpan.textContent = text;
-      li.appendChild(textSpan);
-      if (completed) li.classList.add('completed');
+	  const li = document.createElement('li');
+	  const textSpan = document.createElement('span');
+	  textSpan.textContent = text;
+	  li.appendChild(textSpan);
+	  if (completed) li.classList.add('completed');
 
-      li.addEventListener('click', async () => {
-        const newStatus = !li.classList.contains('completed');
-        li.classList.toggle('completed');
-        if (id) await supabase.from("tasks").update({ completed: newStatus }).eq("id", id);
-      });
+	  li.addEventListener('click', async () => {
+		if (event.target.tagName === 'BUTTON' || event.target.tagName === 'INPUT') return;
+		const newStatus = !li.classList.contains('completed');
+		li.classList.toggle('completed');
+		if (id) await supabase.from("tasks").update({ completed: newStatus }).eq("id", id);
+	  });
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.classList.add('delete-btn');
-      deleteBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        li.remove();
-        if (id) await supabase.from("tasks").delete().eq("id", id);
-      });
+	  const deleteBtn = document.createElement('button');
+	  deleteBtn.textContent = 'Supprimer';
+	  deleteBtn.classList.add('delete-btn');
+	  deleteBtn.addEventListener('click', async (e) => {
+		e.stopPropagation();
+		li.remove();
+		if (id) await supabase.from("tasks").delete().eq("id", id);
+	  });
 
-      li.appendChild(deleteBtn);
-      taskList.appendChild(li);
+	  const editBtn = document.createElement('button');
+	  editBtn.textContent = 'Modifier';
+	  editBtn.classList.add('modif-btn');
+	  editBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
 
-      if (!id) {
-        const { data } = await supabase
-          .from("tasks")
-          .insert([{ text, completed, user_id: currentUser.id }])
-          .select();
-        id = data[0].id;
-      }
-    }
+		const input = document.createElement('input');
+		input.type = 'text';
+		input.value = textSpan.textContent;
+		li.insertBefore(input, textSpan);
+		li.removeChild(textSpan);
+
+		editBtn.style.display = 'none';
+
+		const saveBtn = document.createElement('button');
+		saveBtn.textContent = 'Valider';
+		saveBtn.classList.add('modif-btn');
+		li.insertBefore(saveBtn, deleteBtn);
+
+		saveBtn.addEventListener('click', async (e) => {
+		  e.stopPropagation();
+		  const newText = input.value.trim();
+		  if (!newText) return;
+
+		  if (id) {
+			await supabase.from("tasks").update({ text: newText }).eq("id", id);
+		  }
+
+		  textSpan.textContent = newText;
+		  li.insertBefore(textSpan, input);
+		  li.removeChild(input);
+		  li.removeChild(saveBtn);
+		  editBtn.style.display = '';
+		});
+	  });
+
+	  li.appendChild(editBtn);
+	  li.appendChild(deleteBtn);
+	  taskList.appendChild(li);
+
+	  if (!id) {
+		const { data } = await supabase
+		  .from("tasks")
+		  .insert([{ text, completed, user_id: currentUser.id }])
+		  .select();
+		id = data[0].id;
+	  }
+	}
 
     async function loadTasks() {
       const { data, error } = await supabase
