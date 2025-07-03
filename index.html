@@ -105,7 +105,7 @@
     <h1>Connexion</h1>
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Mot de passe" />
-	<input type="text" id="registerUsername" placeholder="Nom d'utilisateur (inscription uniquement)" />
+	<input type="text" id="displayname" placeholder="Nom d'utilisateur" />
     <button onclick="register()">Créer un compte</button>
     <button onclick="login()">Se connecter</button>
     <p id="message"></p>
@@ -140,32 +140,22 @@
     async function register() {
 	  const email = document.getElementById("email").value.trim();
 	  const password = document.getElementById("password").value;
-	  const username = document.getElementById("registerUsername").value.trim();
+	  const displayName = document.getElementById("displayname").value.trim();
 
-	  if (!email || !password || !username) return showMessage("Tous les champs sont requis");
+	  if (!email || !password || !displayName) {
+		return showMessage("Tous les champs sont requis");
+	  }
 
-	  const { data: existingUser, error: existingUserError } = await supabase
-		.from("profiles")
-		.select("*")
-		.eq("username", username)
-		.single();
-
-	  if (existingUser) return showMessage("Nom d'utilisateur déjà utilisé");
-
-	  const { data, error } = await supabase.auth.signUp({
+	  const { data: signupData, error: signupError } = await supabase.auth.signUp({
 		email,
 		password,
+		options: {
+		  emailRedirectTo: window.location.origin
+		}
 	  });
+	  if (signupError) return showMessage(signupError.message);
 
-	  if (error) return showMessage(error.message);
-
-	  const userId = data.user.id;
-
-	  const { error: profileError } = await supabase
-		.from("profiles")
-		.insert([{ id: userId, username }]);
-
-	  if (profileError) return showMessage("Erreur lors de la création du profil");
+	  const userId = signupData.user.id;
 
 	  showMessage("Compte créé ! Vérifiez votre e-mail.", "green");
 	}
@@ -180,12 +170,22 @@
 	  currentUser = data.user;
 
 	  const { data: profileData, error: profileError } = await supabase
-		.from("profiles")
-		.select("username")
+	    .from("profiles")
+	    .select("username")
 		.eq("id", currentUser.id)
 		.single();
 
-	  const username = profileData?.username || currentUser.email;
+	  let username;
+	  if (profileData) {
+		username = profileData.username;
+	  } else {
+	    const displayName = document.getElementById("displayname").value.trim();
+	    const { error: insertProfileError } = await supabase
+		  .from("profiles")
+		  .insert([{ id: currentUser.id, username: displayName }]);
+		if (insertProfileError) return showMessage("Erreur profil : " + insertProfileError.message);
+		username = displayName;
+	  }
 
 	  document.getElementById("authContainer").style.display = "none";
 	  document.getElementById("todoContainer").style.display = "block";
@@ -199,7 +199,7 @@
       document.getElementById("authContainer").style.display = "block";
       document.getElementById("todoContainer").style.display = "none";
       taskList.innerHTML = '';
-      document.getElementById("username").value = '';
+      document.getElementById("displayname").value = '';
       document.getElementById("password").value = '';
       showMessage("");
     }
