@@ -1,0 +1,92 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.container {
+  width: 320px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  text-align: center;
+}
+h1 {
+  margin-bottom: 20px;
+  color: #333;
+}
+input, button {
+  width: 90%;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #0056b3;
+}
+ul {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+  max-height: 300px;
+  overflow-y: auto;
+  word-break: break-word;
+}
+li {
+  background: #f9f9f9;
+  padding: 10px;
+  border: 1px solid #ddd;
+  margin: 5px 0;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+li.completed span {
+  text-decoration: line-through;
+  color: #888;
+}
+.delete-btn {
+  font-size: 11px;
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius:4px;
+  cursor: pointer;
+  min-width:50px;
+  max-width:75px;
+  max-height:30px;
+}
+.delete-btn:hover {
+  background: #cc0000;
+}
+.modif-btn {
+  font-size: 11px;
+  background: #27B744;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius:4px;
+  cursor: pointer;
+  min-width:50px;
+  max-width:60px;
+  max-height:30px;
+}
+.modif-btn:hover {
+  background: #00cc00;
+}
+#message {
+color: red; margin: 5px 0;
+}  
