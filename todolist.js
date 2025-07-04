@@ -55,7 +55,7 @@ async function register() {
 
   const { error: updateError } = await supabase
     .from("profiles")
-    .update({ username, email })
+    .update({ username })
     .eq("id", user.id);
 
   if (updateError) {
