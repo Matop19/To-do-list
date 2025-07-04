@@ -22,6 +22,7 @@ async function register() {
   if (!email || !password || !username) {
     return showMessage("Tous les champs sont requis");
   }
+
   const { data: existingUser, error: checkError } = await supabase
     .from("profiles")
     .select("id")
@@ -57,13 +58,6 @@ async function register() {
     .update({ username, email })
     .eq("id", user.id);
 
-  if (!error) {
-  const user = data.user;
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ username })
-    .eq('id', user.id);
-
   if (updateError) {
     console.error("Erreur lors de l’enregistrement du username :", updateError);
     return showMessage("Erreur lors de l'enregistrement du profil");
@@ -71,7 +65,6 @@ async function register() {
 
   showMessage("Compte créé ! Vérifiez votre e-mail pour activer votre compte.", "green");
 }
-
 
 async function login() {
   const email = document.getElementById("email").value.trim();
@@ -95,7 +88,7 @@ async function login() {
   document.getElementById("welcome").textContent = "Bienvenue, " + username;
 
   loadTasks();
-  }
+}
 async function logout() {
   await supabase.auth.signOut();
   currentUser = null;
