@@ -56,15 +56,14 @@ async function register() {
   }
 
   // Mettre à jour le profil existant avec le nom d'utilisateur
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({ username })
-    .eq("id", user.id);
+  const { error: insertError } = await supabase
+  .from("profiles")
+  .insert([{ id: user.id, email, username }]);
 
-  if (updateError) {
-    console.error("Erreur lors de l’enregistrement du profil :", updateError);
-    return showMessage("Erreur lors de l'enregistrement du profil");
-  }
+if (insertError) {
+  console.error("Erreur lors de la création du profil :", insertError);
+  return showMessage("Erreur lors de la création du profil");
+}
 
   showMessage("Compte créé ! Vérifiez votre e-mail pour activer votre compte.", "green");
 }
