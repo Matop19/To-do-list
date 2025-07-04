@@ -23,7 +23,6 @@ async function register() {
     return showMessage("Tous les champs sont requis");
   }
 
-  // Vérifie que le nom d'utilisateur n'existe pas déjà
   const { data: existingUser, error: checkError } = await supabase
     .from("profiles")
     .select("id")
@@ -39,7 +38,6 @@ async function register() {
     return showMessage("Nom d'utilisateur déjà utilisé");
   }
 
-  // Inscription de l'utilisateur
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
@@ -55,15 +53,23 @@ async function register() {
     return showMessage("Inscription réussie, mais utilisateur non connecté");
   }
 
-  // Mettre à jour le profil existant avec le nom d'utilisateur
-  const { error: insertError } = await supabase
-  .from("profiles")
-  .insert([{ id: user.id, email, username }]);
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ username })
+    .eq("id", user.id);
 
-if (insertError) {
-  console.error("Erreur lors de la création du profil :", insertError);
-  return showMessage("Erreur lors de la création du profil");
-}
+  if (updateError) {
+    console.error("Erreur lors de l’enregistrement du username :", updateError);
+    return showMessage("Erreur lors de l'enregistrement du profil");
+  }
+  const { error: insertError } = await supabase
+    .from("profiles")
+    .insert([{ id: user.id, email, username }]);
+
+  if (insertError) {
+	console.error("Erreur lors de l’insertion du profil :", insertError);
+	return showMessage("Erreur lors de l'enregistrement du profil");
+  }
 
   showMessage("Compte créé ! Vérifiez votre e-mail pour activer votre compte.", "green");
 }
