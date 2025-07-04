@@ -57,6 +57,13 @@ async function register() {
     .update({ username, email })
     .eq("id", user.id);
 
+  if (!error) {
+  const user = data.user;
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ username })
+    .eq('id', user.id);
+
   if (updateError) {
     console.error("Erreur lors de l’enregistrement du username :", updateError);
     return showMessage("Erreur lors de l'enregistrement du profil");
