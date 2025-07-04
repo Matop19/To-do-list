@@ -53,10 +53,14 @@ async function register() {
     return showMessage("Inscription réussie, mais utilisateur non connecté");
   }
 
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({ username })
-    .eq("id", user.id);
+  const { error: insertError } = await supabase
+	.from("profiles")
+    .insert([{ id: user.id, email, username }]);
+
+  if (insertError) {
+	console.error("Erreur lors de l’insertion du profil :", insertError);
+	return showMessage("Erreur lors de l'enregistrement du profil");
+  }
 
   if (updateError) {
     console.error("Erreur lors de l’enregistrement du username :", updateError);
