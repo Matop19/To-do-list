@@ -164,22 +164,13 @@ async function addTask(text, completed = false, id = null) {
   li.appendChild(editBtn);
   li.appendChild(deleteBtn);
   taskList.appendChild(li);
-  if (!id) {
-  console.log("Tentative d'insertion dans Supabase avec", {
-    text,
-    completed,
-    user_id: currentUser?.id
-  });
+
   if (!id) {
 	const { data } = await supabase
       .from("tasks")
       .insert([{ text, completed, user_id: currentUser.id }])
       .select();
     id = data[0].id;
-  }
-  if (error) {
-    console.error("Erreur insertion tâche :", error);
-    return showMessage("Erreur enregistrement tâche.");
   }
 }
 
