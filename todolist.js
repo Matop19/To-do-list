@@ -39,35 +39,32 @@ async function register() {
   }
 
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email,
-    password,
+	email,
+	password,
   });
 
   if (signUpError) {
-    console.error("Erreur d'inscription :", signUpError);
-    return showMessage(signUpError.message);
+	console.error("Erreur d'inscription :", signUpError);
+	return showMessage(signUpError.message);
   }
 
   const user = signUpData.user;
   if (!user) {
-    return showMessage("Inscription réussie, mais utilisateur non connecté");
+	return showMessage("Inscription réussie, mais utilisateur non connecté");
   }
 
-  const { error: updateError } = await supabase
+  const { error: profileError } = await supabase
     .from("profiles")
-    .update({ username })
-    .eq("id", user.id);
+    .upsert([
+      {
+        id: user.id,
+        email,
+        username,
+      }
+    ]);
 
-  if (updateError) {
-    console.error("Erreur lors de l’enregistrement du username :", updateError);
-    return showMessage("Erreur lors de l'enregistrement du profil");
-  }
-  const { error: insertError } = await supabase
-    .from("profiles")
-    .insert([{ id: user.id, email, username }]);
-
-  if (insertError) {
-	console.error("Erreur lors de l’insertion du profil :", insertError);
+  if (profileError) {
+	console.error("Erreur lors de l’insertion du profil :", profileError);
 	return showMessage("Erreur lors de l'enregistrement du profil");
   }
 
